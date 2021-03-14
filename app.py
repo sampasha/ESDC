@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import requests
 import plotly.graph_objects as go
-from Linkedin_scraping import get_linkedin_info
+# from Linkedin_scraping import get_linkedin_info
 from places_api import google_data
 
 GMAPS_API_KEY="AIzaSyBja88VRg3fkfpYcseDWpQXuVuOGdLKEBI"
@@ -83,8 +83,31 @@ def render_linkedin_card(business_name):
     #st.markdown(linkedin_card, unsafe_allow_html=True)
 
 def render_google_data(business_code,business_name,GMAPS_API_KEY):
-    json_data = google_data(business_code,business_name,GMAPS_API_KEY)
-    st.write(json_data)
+    google_response = google_data(business_code,business_name,GMAPS_API_KEY)
+    # st.write(json_data)
+    google_card = """
+                
+                <body>
+                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin: auto;text-align: center;font-family: arial;">
+                <img src="" alt="John" style="width:100%">
+                <h1>Google Reviews</h1>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Business Name</b>: {}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Business Status</b>:{} </p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Address</b>:{} </p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Rating</b>:{}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Phone Number</b>:{}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Review Time</b>:{} </p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Review</b>:{}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Author URL</b>: {}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Website</b>:{}</p>
+                
+                <p><button style ="border: none;outline: 0;display: inline-block;padding: 8px;color: white;background-color: #000;text-align: center;cursor: pointer;width: 100%;font-size: 18px;">Confidence Score: 68%</button></p>
+                </div>
+
+                </body>""".format(google_response['name'], google_response['status'], google_response['address'], google_response['rating'], google_response['number'], google_response['review_time'], google_response['review text'], google_response['author url'], google_response['website'])
+
+    st.markdown(google_card, unsafe_allow_html=True)
+    
 
 def color_code(status):
     if status=='Pending':
@@ -121,7 +144,7 @@ def load_business():
     if st.checkbox("View On Map"):
         st.map(business_df)
     st.subheader("Linkedin")
-    render_linkedin_card(business_name)
+    # render_linkedin_card(business_name)
     
 
 if __name__ == "__main__":
