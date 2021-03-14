@@ -3,12 +3,14 @@ import pandas as pd
 import json
 import requests
 import plotly.graph_objects as go
-# from Linkedin_scraping import get_linkedin_info
+from Linkedin_scraping import get_linkedin_info
 from canada_registry import get_registry_data
 from places_api import google_data
 from PIL import Image
+import random
 
 GMAPS_API_KEY="AIzaSyBja88VRg3fkfpYcseDWpQXuVuOGdLKEBI"
+#global x
 x = 0
 dict_compare = {}
 
@@ -30,10 +32,6 @@ def load_mainpage():
     st.markdown("""
     In today’s world mostly every legitimate companies have some social media footprint. For any given company our application verifies if it is a licensed and registered business along with tracing its social media presence.  Any small business will at least be present on one social media platform. Hence, for this hackathon purpose we are trying to scrape company data from LinkedIn and Google.  Apart from that we are also scraping legal data from resource canada registry.
     Finally,  we are combining above scraped data with vancouver business data and analysing them. Our dashboard gives an overall confidence percentage for the selected business which calculated by giving different weights to the above gathered data. It also  shows a detailed breakdown all the data sources.  Based on the confidence percentage we can get the chances of a company being fraudulent. Higher the confidence percentage more reliable the company is.
-
-    
-    
-    
     """)
 
 def check_nan(x):
@@ -86,13 +84,14 @@ def render_plot(df_company):
     global x
     x += confidence
     st.plotly_chart(fig)
+
 def render_canada_registry_card(business_name):
     canada_registry_info = get_registry_data(business_name)
     canada_registry_card = """
 
                 <body>
-                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin: auto;text-align: center;font-family: arial;">
-                <img src="https://beta.canadasbusinessregistries.ca/assets/img/canada-wordmark.png" alt="John" style="width:100%">
+                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 800px; margin: auto;text-align: center;font-family: arial;">
+                <img src="https://beta.canadasbusinessregistries.ca/assets/img/canada-wordmark.png" style='width:100%'>
                 <h1>Canada Business Registry</h1>
                 <p class="title" style="color: grey;font-size: 18px;">Business Number: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Registry ID: {}</p>
@@ -102,30 +101,33 @@ def render_canada_registry_card(business_name):
                 </div>
                 </body>""".format(canada_registry_info['Business Number'], canada_registry_info['Registry Id'], canada_registry_info['Registered Office Number'], canada_registry_info['Status'], canada_registry_info['Created'])
     dict_compare['registry_status'] = canada_registry_info['Status']
+    global x
+    x+=canada_registry_info['score']
     st.markdown(canada_registry_card, unsafe_allow_html=True)
 
 def render_linkedin_card(business_name):
     linkedin_json = get_linkedin_info(business_name)
-    #st.write(linkedin_json)
     linkedin_card = """
-                
+
                 <body>
-                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin: auto;text-align: center;font-family: arial;">
-                <img src="https://softwareengineeringdaily.com/wp-content/uploads/2020/02/LinkedIn.jpg" alt="John" style="width:100%">
-                <h1>Linkedin</h1>
+                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 800px; margin: auto;text-align: center;font-family: arial;">
+                <img src="https://softwareengineeringdaily.com/wp-content/uploads/2020/02/LinkedIn.jpg" style='width:100%'>
+                <h1>LinkedIn</h1>
                 <p class="title" style="color: grey;font-size: 18px;">Industry: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">HQ: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Company Type: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Founded: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Employees: {}</p>
-                
+
                 </body>""".format(linkedin_json['industry'],linkedin_json['Headquarters'],linkedin_json['Type'],linkedin_json['Founded'],linkedin_json['Company size'])
     st.markdown(linkedin_card, unsafe_allow_html=True)
+    global x
+    x+=linkedin_json['Score']
 
 def render_business_data(df_company):
     df = df_company.sort_values(['FOLDERYEAR'],ascending=False)
     df = df.iloc[0]
-    license_card = """     
+    license_card = """
                 <body>
                 <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 800px; margin: auto;text-align: center;font-family: arial; background-color: #cccaca;">
                 <img src="https://icon-library.com/images/882be28c9e.png" width="100" height="100">
@@ -139,7 +141,7 @@ def render_business_data(df_company):
                 <p class="title" style="color: grey;font-size: 18px;"><b>Address</b>: {},{},{},{}</p>
                 <p class="title" style="color: grey;font-size: 18px;"><b>Postal Code</b>: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;"><b>Employees</b>: {}</p>
-                
+
                 </body>""".format(df['LicenceNumber'],df['LicenceRSN'],df['Status'],df['BusinessType'],df['BusinessSubType'],df['Unit'],
                     df['Street'],df['City'],df['Province'],df['Country'],df['PostalCode'],df['NumberofEmployees'])
     st.markdown(license_card, unsafe_allow_html=True)
@@ -177,6 +179,8 @@ def render_google_data(business_code,business_name,GMAPS_API_KEY):
 
     dict_compare['google_status'] = google_response['status']
     dict_compare['google_address'] = google_response['address']
+    global x
+    x+=google_response['score']
     st.markdown(google_card, unsafe_allow_html=True)
 
 
@@ -199,14 +203,15 @@ def render_confidence_score(score):
                          <body>
                          <div class="w3-container">
                          <div class="w3-light-grey">
-                         <h4>Company Confidence Score</h4>
-                         <div class="w3-container w3-green w3-center" style="width:{}%">{}</div>
+                         <center><h4>Company Confidence Score</h4></center>
+                         <div class="w3-container w3-green w3-center" style="width:{}%">{}%</div>
                          </div><br>
                          </div>
                          """.format(score, score)
     st.markdown(progress_bar_html, unsafe_allow_html=True)
 
 def load_business():
+    isRender = False
     business_data = load_data()
     # row_num = st.number_input('Choose the display size', min_value=5)
     business_name = st.selectbox('Select The Business you want to explore',business_data['BusinessName'].unique())
@@ -215,11 +220,12 @@ def load_business():
     business_code = business_df['PostalCode'].unique()
     # st.write(business_df.head(5))
     business_df['complete_address'] = (business_df['House'].astype(int)).astype(str)+' '+business_df['Street']+', '+business_df['City']+', '+business_df['Province']+','+business_df['Country']+' '+business_df['PostalCode']
-    dict_compare['complete_address'] = business_df['complete_address']
     address_option = st.selectbox("Please select the address", business_df['complete_address'].unique())
+    dict_compare['complete_address'] = address_option
+
     issue_df = process_issue(business_data, business_name)
     license, license_card = st.beta_columns(2)
-    
+
     with license:
         st.subheader("Licenses Issued")
         render_plot(issue_df)
@@ -228,32 +234,36 @@ def load_business():
     # if len(business_code)==1:
     #     st.write("Found 1 Matching Pincode")
     #    st.write(response.json()
-    
-    google, linkedin = st.beta_columns(2)
-    
-    with linkedin:
-        st.subheader("Linkedin")
-    #   render_linkedin_card(business_name)
-    # render_canada_registry_card(business_name)
-    with google:
-        st.subheader("Google")
-        render_google_data(business_code,business_name,GMAPS_API_KEY)    
-    
-    st.write("There are "+str(business_count)+" Matches for "+business_name)
-    view_df, view_map= st.beta_columns(2)
-    with view_df:
-        if st.checkbox("View Records"):
-            st.write(business_df[business_df['complete_address']==address_option])
-    with view_map:
-        if st.checkbox("View On Map"):
-            st.map(business_df)
-    
+    st.subheader("Google")
+    render_google_data(business_code,business_name,GMAPS_API_KEY)
+
+    canada_registry_container, linkedin = st.beta_columns(2)
+
+
+
+    if isRender==False:
+        with linkedin:
+            st.subheader("Linkedin")
+            render_linkedin_card(business_name)
+
+        with canada_registry_container:
+            st.subheader("Canadian Business Registry")
+            render_canada_registry_card(business_name)
+
+
+
+    #st.write("There are "+str(business_count)+" Matches for "+business_name)
     compute_matches()
     global x
     score = (x*100)/35
-    render_confidence_score(x)
-    
-    
+    render_confidence_score(score)
+
+
+    st.map(business_df)
+
+
+
+
 
 if __name__ == "__main__":
     main()
