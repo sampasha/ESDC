@@ -88,7 +88,7 @@ def render_google_data(business_code,business_name,GMAPS_API_KEY):
     google_card = """
                 
                 <body>
-                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin: auto;text-align: center;font-family: arial;">
+                <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 800px; margin: auto;text-align: center;font-family: arial;">
                 <img src="" alt="John" style="width:100%">
                 <h1>Google Reviews</h1>
                 <p class="title" style="color: grey;font-size: 18px;"><b>Business Name</b>: {}</p>
@@ -98,8 +98,8 @@ def render_google_data(business_code,business_name,GMAPS_API_KEY):
                 <p class="title" style="color: grey;font-size: 18px;"><b>Phone Number</b>:{}</p>
                 <p class="title" style="color: grey;font-size: 18px;"><b>Review Time</b>:{} </p>
                 <p class="title" style="color: grey;font-size: 18px;"><b>Review</b>:{}</p>
-                <p class="title" style="color: grey;font-size: 18px;"><b>Author URL</b>: {}</p>
-                <p class="title" style="color: grey;font-size: 18px;"><b>Website</b>:{}</p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Author URL</b>: <a href="{}" target="_blank">link</a></p>
+                <p class="title" style="color: grey;font-size: 18px;"><b>Website</b>:<a href="{}"> website</a></p>
                 
                 <p><button style ="border: none;outline: 0;display: inline-block;padding: 8px;color: white;background-color: #000;text-align: center;cursor: pointer;width: 100%;font-size: 18px;">Confidence Score: 68%</button></p>
                 </div>
