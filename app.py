@@ -8,6 +8,8 @@ from places_api import google_data
 from canada_registry import get_registry_data
 
 GMAPS_API_KEY="AIzaSyBja88VRg3fkfpYcseDWpQXuVuOGdLKEBI"
+x = 0
+dict_compare = {}
 
 def main():
     st.set_page_config(page_title='ESDC', page_icon=':office:',layout='wide')
@@ -16,10 +18,10 @@ def main():
 
     if app_mode=="MainPage":
         load_mainpage()
-    
+
     elif app_mode=="Business Tracker":
         load_business()
-    
+
 
 def load_mainpage():
     st.header("Welcome To the Business Tracker")
@@ -38,7 +40,7 @@ def lon(x):
 
 @st.cache
 def load_data():
-    df = pd.read_csv('business-licences-hackathon.csv', sep=';')  
+    df = pd.read_csv('business-licences-hackathon.csv', sep=';')
     df['Geom'] = df['Geom'].apply(check_nan)
     df['lat'] = df['Geom'].apply(lat)
     df['lon'] = df['Geom'].apply(lon)
@@ -60,13 +62,26 @@ def render_plot(df_company):
     values=[df_company.Year, df_company.Status, df_company.IssuedDate, df_company.ExpiredDate],
     line_color=[df_company.color], fill_color=[df_company.color],
     align='center', font=dict(color='black', size=11)))])
+    df_demo = df_company[df_company['Status']=='Cancelled']
+    st.write(df_demo)
+    if len(df_demo) == 0:
+        confidence = 5
+    elif len(df_demo) == 1:
+        confidence = 3
+    elif len(df_demo) ==2:
+        confidence = 1
+    else:
+        confidence = 0
+    global x
+    x += confidence
+    st.write(x)
     st.plotly_chart(fig)
 
 def render_linkedin_card(business_name):
     linkedin_json = get_linkedin_info(business_name)
     #st.write(linkedin_json)
     linkedin_card = """
-                
+
                 <body>
                 <div class="card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin: auto;text-align: center;font-family: arial;">
                 <img src="https://softwareengineeringdaily.com/wp-content/uploads/2020/02/LinkedIn.jpg" alt="John" style="width:100%">
@@ -76,7 +91,7 @@ def render_linkedin_card(business_name):
                 <p class="title" style="color: grey;font-size: 18px;">Company Type: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Founded: {}</p>
                 <p class="title" style="color: grey;font-size: 18px;">Employees: {}</p>
-                
+
                 </body>""".format(linkedin_json['industry'],linkedin_json['Headquarters'],linkedin_json['Type'],linkedin_json['Founded'],linkedin_json['Company size'])
     st.markdown(linkedin_card, unsafe_allow_html=True)
 
@@ -95,7 +110,19 @@ def render_canada_registry_card(business_name):
                 <p class="title" style="color: grey;font-size: 18px;">Created: {}</p>
                 </div>
                 </body>""".format(canada_registry_info['Business Number'], canada_registry_info['Registry Id'], canada_registry_info['Registered Office Number'], canada_registry_info['Status'], canada_registry_info['Created'])
+    dict_compare['registry_status'] = canada_registry_info['Status']
     st.markdown(canada_registry_card, unsafe_allow_html=True)
+
+def compute_matches():
+    confidence=0
+    if(dict_compare['google_status'] == dict_compare['registry_status']):
+        confidence+=2
+    """
+    if(dict_compare['google_address'] == dict_compare['complete_address']):
+        confidence+=2
+    """
+    global x
+    x+=confidence
 
 def render_google_data(business_code,business_name,GMAPS_API_KEY):
     google_response = google_data(business_code,business_name,GMAPS_API_KEY)
@@ -116,7 +143,8 @@ def render_google_data(business_code,business_name,GMAPS_API_KEY):
                 <p class="title" style="color: grey;font-size: 18px;"><b>Website</b>:{}</p>
 
                 </body>""".format(google_response['name'], google_response['status'], google_response['address'], google_response['rating'], google_response['number'], google_response['review time'], google_response['review text'], google_response['author url'], google_response['website'])
-
+    dict_compare['google_status'] = google_response['status']
+    dict_compare['google_address'] = google_response['address']
     st.markdown(google_card, unsafe_allow_html=True)
 
 def render_confidence_score(score):
@@ -153,28 +181,26 @@ def load_business():
     business_df = business_data[business_data['BusinessName']==business_name]
     business_count = business_df['BusinessName'].count()
     business_code = business_df['PostalCode'].unique()
-
+    #global_dict['complete_address'] = business_df['complete_address']
     st.write("There are "+str(business_count)+" Matches for "+business_name)
     if st.checkbox("View Records"):
         st.write(business_df)
     if st.checkbox("View On Map"):
         st.map(business_df)
-    
+
     issue_df = process_issue(business_data, business_name)
     render_plot(issue_df)
-    # if len(business_code)==1:
-    #     st.write("Found 1 Matching Pincode")
     render_google_data(business_code,business_name,GMAPS_API_KEY)
-    
-    #    st.write(response.json())
-    
+
     st.subheader("Linkedin")
     render_linkedin_card(business_name)
     render_canada_registry_card(business_name)
-    score=60
-    render_confidence_score(score)
+    compute_matches()
+    global x
+    st.write(x)
+    score = (x*100)/35
+    render_confidence_score(x)
 
-    
 
 if __name__ == "__main__":
     main()
