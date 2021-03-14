@@ -91,7 +91,7 @@ def get_linkedin_info(business_name):
                             
     driver.quit()
     driver1.quit()
-    
+    #return dict
     return dict1
 
 
