@@ -12,7 +12,7 @@ import time
 
 def get_registry_data(companyname):
     # specifies the path to the chromedriver.exe
-    driver = webdriver.Chrome('chromedriver')
+    driver = webdriver.Chrome(r'C:\Users\Saptarshi\Downloads\chromedriver')
     # driver.get method() will navigate to a page given by the URL address
     driver.get('https://beta.canadasbusinessregistries.ca/search')
 
@@ -32,30 +32,30 @@ def get_registry_data(companyname):
     dict1 = dict((el,"Not Found") for el in ls)
     s = 0
     js = None
-    for i in card:
-        m = i.text.split("\n")
 
-        if m:
-            for k in m:
-                if "Business Number" in k:
-                        dict1['Business Number'] = k.split(":")[1].strip()
-                        s += 1
+    m = card[0].text.split("\n")
 
-                if "Registry ID" in k:
-                        dict1['Registry Id'] = k.split(":")[1].strip()
-                        s += 1
-            
-                if "Registered Office Number" in k:
-                        dict1['Registered Office Number'] = k.split(":")[1].strip()
-                        s += 1       
+    if m:
+        for k in m:
+            if "Business Number" in k:
+                    dict1['Business Number'] = k.split(":")[1].strip()
+                    s += 2
 
-                if "Status" in k:
-                        dict1['Status'] = k.split(":")[1].strip()
-                        s+=1
+            if "Registry ID" in k:
+                    dict1['Registry Id'] = k.split(":")[1].strip()
+                    s += 2
 
-                if "Created" in k:
-                        dict1['Created'] = k.split(":")[1].strip()
-                        s+=1
+            if "Registered Office Number" in k:
+                    dict1['Registered Office Number'] = k.split(":")[1].strip()
+                    s += 2
+
+            if "Status" in k:
+                    dict1['Status'] = k.split(":")[1].strip()
+                    s+=2
+
+            if "Created" in k:
+                    dict1['Created'] = k.split(":")[1].strip()
+                    s+=3
     dict1['score'] = s
 
     return dict1
